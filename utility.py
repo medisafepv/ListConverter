@@ -74,7 +74,7 @@ def load_format(filename, header=5, sheet_name="AE"):
 
 
         
-def process_values(df, main_display):
+def process_values(df):
     binary_cols = ["Expectedness","중대성", "ADR 여부", "자료원"]
     edited = list()
     idx = 0
