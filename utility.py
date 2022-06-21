@@ -1,4 +1,5 @@
 import io
+import re
 import pandas as pd
 import numpy as np
 import ipywidgets as widgets
@@ -72,9 +73,27 @@ def load_format(filename, header=5, sheet_name="AE"):
     return df
 
 
+def process_meddra(df):
+    print("Check SOC, PT terms are unique:")
+    
+    meddra_cols = ["SOC", "PT"]
+    special_chars = ['\t', '\r', '\n', '\v']
+    
+    for m in meddra_cols:
+        cleaned = []
+        for text in df[m]:
+            no_ws = re.sub("\s{2,}", "", text)
+            for c in special_chars:
+                no_ws = re.sub(c, "", no_ws)
+                
+            cleaned.append(no_ws)
+        df[m] = cleaned
+        print("{}\n{}".format(m, pd.unique(cleaned)))
+    
+    return df
 
         
-def process_values(df):
+def process_binary(df):
     binary_cols = ["Expectedness","중대성", "ADR 여부", "자료원"]
     edited = list()
     idx = 0
@@ -94,21 +113,21 @@ def process_values(df):
                 
                 cleaned = [x for x in df[binary_cols[idx]] if str(x) != 'nan']
                 if len(pd.unique(cleaned)) > 2:
-                    print("Failed to make binary variable for '{}'".format(binary_cols[i]))
+                    print("Failed to make binary variable for '{}'".format(binary_cols[idx]))
                     print(pd.unique(cleaned))
-                    df = process_values(df)
+                    df = process_binary(df)
 
             elif choice == "2":
                 edited.append(idx)
                 remove = input("\tString to remove (e.g., \\n): ")
                 value = input("\tValue to replace: ")
-                df[binary_cols[idx]] = df[binary_cols[idx]].str.replace(remove, value)
+                df[binary_cols[idx]] = df[binary_cols[idx]].str.replace(remove, value, regex=True)
                 
                 cleaned = [x for x in df[binary_cols[idx]] if str(x) != 'nan']
                 if len(pd.unique(cleaned)) > 2:
-                    print("Failed to make binary variable for '{}'".format(binary_cols[i]))
+                    print("Failed to make binary variable for '{}'".format(binary_cols[idx]))
                     print(pd.unique(cleaned))
-                    df = process_values(df)
+                    df = process_binary(df)
                 
             elif choice == "3":
                 idx += 1
@@ -118,19 +137,12 @@ def process_values(df):
                 print("Enter 1, 2 or 3")
                 idx -= 1
         idx += 1
-            
-    # for i in edited:
-    #     cleaned = [x for x in df[binary_cols[i]] if str(x) != 'nan']
-    #     if len(pd.unique(cleaned)) > 2:
-    #         print("Failed to make binary variable for '{}'".format(binary_cols[i]))
-    #         print(pd.unique(cleaned))
-    #         print("Halting")
-    #         assert False
         
     print("*"*40)
     print("Summary")
     for binary in binary_cols:
-        print("{} : {}".format(binary, pd.unique(df[binary])))
+        cleaned = [x for x in df[binary] if str(x) != 'nan']
+        print("{} : {}".format(binary, pd.unique(cleaned)))
     print("*"*40)
     
     return df
@@ -156,7 +168,7 @@ def process_time(df):
         elif choice == "2":
             remove = input("\tCharacter(s) to replace (e.g., \\n): ")
             value = input("\tReplacement character(s): ")
-            df["차수"] = df["차수"].str.replace(remove, value)
+            df["차수"] = df["차수"].str.replace(remove, value, regex=True)
             
         elif choice == "3":
             continue
@@ -164,7 +176,6 @@ def process_time(df):
         else:
             print("Enter 1, 2 or 3")
 
-    
     return df
 
 
@@ -205,26 +216,16 @@ def make_expectedness_key(df):
     '''
     Works with data_processed     
     '''
-    df["SOC-PT"] = df["SOC"] + "-" + df["PT"]
+    df["SOC#PT"] = df["SOC"] + "#" + df["PT"]
     key = df.drop(columns=['차수', '중대성', 'ADR 여부', '자료원', 'SOC', 'PT']).reset_index(drop=True)
-    key = key.drop_duplicates("SOC-PT")
-    key_cols = key['SOC-PT']
+    key = key.drop_duplicates("SOC#PT")
+    key_cols = key['SOC#PT']
     key = key.T
     key.columns = key_cols
     key = key.reset_index(drop=True)
     key = key.drop(index=1)
     return key
 
-
-def make_medDRA_key(df):
-    key = df[["SOC-PT original", "SOC-PT"]]
-    key = key.drop_duplicates("SOC-PT")
-    key_cols = key['SOC-PT']
-    key = key.T
-    key.columns = key_cols
-    key = key.reset_index(drop=True)
-    key = key.drop(index=1)
-    return key
 
 
 def transform_format(data_processed_in, mode=0):
@@ -233,13 +234,7 @@ def transform_format(data_processed_in, mode=0):
     mode = 1 : SOC and PT 분리 된 포맷 (default)
     '''
     data_processed_in = data_processed_in.copy()
-    data_processed_in["SOC-PT original"] = data_processed_in["SOC"] + "-" + data_processed_in["PT"]
-    data_processed_in["SOC"] = data_processed_in["SOC"].apply(lambda x : "".join(x.split()))
-    data_processed_in["PT"] = data_processed_in["PT"].apply(lambda x : "".join(x.split())) 
-    data_processed_in["SOC-PT"] = data_processed_in["SOC"] + "-" + data_processed_in["PT"]
     
-    m_key = make_medDRA_key(data_processed_in)
-
     data_processed_in = data_processed_in.sort_values(["SOC", "PT"])
     table = data_processed_in.groupby(["SOC", "PT", "ADR 여부",
                                 "차수", "중대성", "자료원"]).count().unstack(level=-2,
@@ -285,10 +280,10 @@ def transform_format(data_processed_in, mode=0):
     
     # Add expectedness column
     table_df = table.reset_index()
-    table_df['SOC-PT'] = table_df['SOC'] + '-' + table_df['PT']
+    table_df['SOC#PT'] = table_df['SOC'] + '#' + table_df['PT']
     
     e_key = make_expectedness_key(data_processed_in)
-    table["Expectedness"] = e_key[table_df["SOC-PT"]].values[0]    
+    table["Expectedness"] = e_key[table_df["SOC#PT"]].values[0]    
     
     if mode == 1:
         return table
@@ -296,9 +291,7 @@ def transform_format(data_processed_in, mode=0):
     
     # Merge PT and SOC into one column
     table_df = table.reset_index()
-    table_df['SOC-PT'] = table_df['SOC'] + '-' + table_df['PT']
-    table_df['SOC-PT original'] = m_key[table_df["SOC-PT"]].values[0]
-    table_df[['SOC', 'PT']] = table_df['SOC-PT original'].str.split('-', 1, expand=True)
+    table_df['SOC#PT'] = table_df['SOC'] + '#' + table_df['PT']
     table_df["stat"] = 1
     sum_stat = table_df.groupby("SOC").sum()
     sum_stat["Expectedness"] = ""
@@ -309,7 +302,7 @@ def transform_format(data_processed_in, mode=0):
     
     combined = pd.concat([table_df, sum_stat]).reset_index(drop=True)
     combined = combined.sort_values(["SOC", "stat"]).reset_index(drop=True)
-    combined = combined.drop(columns=["SOC", "stat", "SOC-PT", "SOC-PT original"])    
+    combined = combined.drop(columns=["SOC", "stat", "SOC#PT"])    
     return combined
 
 
@@ -317,8 +310,9 @@ def control_process(uploader, main_display, option):
     if main_display:
         print("File submitted...")
         data = load_from_widget(uploader)
-        data_binary = process_values(data)
-        data_processed = process_time(data_binary)
+        data_binary = process_binary(data)
+        data_meddra = process_meddra(data_binary) 
+        data_processed = process_time(data_meddra)
         final = transform_format(data_processed, option)
         return final
     else:
