@@ -119,8 +119,8 @@ def process_binary(df):
 
             elif choice == "2":
                 edited.append(idx)
-                remove = input("\tString to remove (e.g., \\n): ")
-                value = input("\tValue to replace: ")
+                remove = input("\tCharacter(s) to replace: ")
+                value = input("\tReplacement character(s): ")
                 df[binary_cols[idx]] = df[binary_cols[idx]].str.replace(remove, value, regex=True)
                 
                 cleaned = [x for x in df[binary_cols[idx]] if str(x) != 'nan']
@@ -166,7 +166,7 @@ def process_time(df):
             df = df.loc[~df["차수"].str.contains(problem_rows)]
 
         elif choice == "2":
-            remove = input("\tCharacter(s) to replace (e.g., \\n): ")
+            remove = input("\tCharacter(s) to replace: ")
             value = input("\tReplacement character(s): ")
             df["차수"] = df["차수"].str.replace(remove, value, regex=True)
             
