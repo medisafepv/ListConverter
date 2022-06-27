@@ -74,7 +74,7 @@ def load_format(filename, header=5, sheet_name="AE"):
 
 
 def process_meddra(df):
-    print("Check SOC, PT terms are unique:")
+    print("Excel MedDRA (SOC, PT) summary")
     
     meddra_cols = ["SOC", "PT"]
     special_chars = ['\t', '\r', '\n', '\v']
@@ -90,6 +90,7 @@ def process_meddra(df):
         df[m] = cleaned
         print("{}\n{}".format(m, pd.unique(cleaned)))
     
+    print("*"*40)
     return df
 
         
@@ -139,7 +140,7 @@ def process_binary(df):
         idx += 1
         
     print("*"*40)
-    print("Summary")
+    print("Excel Column Summary")
     for binary in binary_cols:
         cleaned = [x for x in df[binary] if str(x) != 'nan']
         print("{} : {}".format(binary, pd.unique(cleaned)))
