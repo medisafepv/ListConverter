@@ -1,7 +1,7 @@
 # Generate 일람표 from coding confirmation excel
 
 1. Binder site 방문 (https://mybinder.org/):
-- GitHub 선택 확인 후 입력: `https://github.com/sion23/ListConverter`
+- GitHub 선택 확인 후 입력: `https://github.com/medisafepv/ListConverter`
 - Git ref 입력: `master`
 
 2. Launch (1-5분)

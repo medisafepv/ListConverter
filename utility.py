@@ -350,6 +350,17 @@ def identify_seriousness(df):
             return [ser_stat[1], ser_stat[0]]
         return [ser_stat[0], ser_stat[1]]
     
+def ensure_order(table):
+    '''Fixes minor bug on ordering trivial columns (e.g., 수집원, 이상사례종류, 허가사항반영여부)'''
+    weightings = {"이상사례종류": 0, "중대한": 1, "중대하지 않은": 2, "허가사항반영여부": 3, "수집원": 4}
+
+    ordered_tuple = list(table.columns)
+    ordered_tuple.sort(key=lambda triple: weightings[triple[0]])
+    
+    ordered_col = pd.MultiIndex.from_tuples(ordered_tuple, names=table.columns.names)
+    
+    return pd.DataFrame(table, columns=ordered_col)
+
 def finalize_columns(combined_in, adr, non_adr, serious, non_serious):
     ''' Updates column names and removes unnecessary'''
     warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
@@ -366,7 +377,7 @@ def finalize_columns(combined_in, adr, non_adr, serious, non_serious):
     combined_in = edit_multilevel_columns(combined_in, pairing_0, level=0)
     combined_in = edit_multilevel_columns(combined_in, pairing_2, level=2)
     
-    return combined_in
+    return ensure_order(combined_in)
 
 
 def add_missing_columns(table_in, seriousness, time, adr_status):
