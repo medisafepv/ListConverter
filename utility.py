@@ -3,11 +3,11 @@ import re
 import pandas as pd
 import numpy as np
 import ipywidgets as widgets
+from ipywidgets import Layout
 import warnings
 
 def prompt_upload():
-    print('Upload Coding Confirmation (.xlsx)')
-    uploader = widgets.FileUpload(accept='*.xlsx', multiple=False)
+    uploader = widgets.FileUpload(description="Upload Coding Confirmation (.xlsx)", layout=Layout(width="270px"), multiple=False)
     display(uploader)
 
     main_display = widgets.Output()
