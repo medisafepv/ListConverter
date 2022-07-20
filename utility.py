@@ -262,7 +262,7 @@ def identify_adrness(df):
         print("'ADR 여부' column에서 'ADR', 'non-ADR'을 찾지 못했습니다:")
         print("현재 'ADR 여부' column:")
         print(adr_stat)
-        print("직접 선택해주세요")
+        print("직접 선택하세요")
         truth = input("'{}'이 'ADR' 맞을까요? (혹은 '{}'이 'non-ADR'). Type y/n ".format(adr_stat[0], adr_stat[1]))
         if truth:
             return [adr_stat[1], adr_stat[0]]
@@ -344,7 +344,7 @@ def identify_seriousness(df):
         print("'중대성' column에서 '예', '아니오'을 찾지 못했습니다:")
         print("현재 중대성 column:")
         print(ser_stat)
-        print("직접 선택해주세요")
+        print("직접 선택하세요")
         truth = input("'{}'이 '중대한' 맞을까요? (혹은 '{}'이 중대하지 않은). Type y/n ".format(ser_stat[0], ser_stat[1]))
         if truth:
             return [ser_stat[1], ser_stat[0]]
