@@ -176,15 +176,15 @@ def process_time(df):
 
             print("*"*40)
             print("Removing following rows...\n")
-            print("{}\n\n".format(df.loc[df["차수"].str.contains(problem_rows, regex=False)]))
+            print("{}\n\n".format(df.loc[df["차수"].str.contains(problem_rows, regex=True)]))
             print("*"*40)
 
-            df = df.loc[~df["차수"].str.contains(problem_rows, regex=False)]
+            df = df.loc[~df["차수"].str.contains(problem_rows, regex=True)]
 
         elif choice == "2":
             remove = input("\t제거할 문자열: ")
             value = input("\t대체할 문자열: ")
-            df["차수"] = df["차수"].str.replace(remove, value, regex=False)
+            df["차수"] = df["차수"].str.replace(remove, value, regex=True)
             
         elif choice == "3":
             continue
@@ -466,6 +466,8 @@ def transform_format(data_processed_in, mode=0):
     
 
 def control_process(uploader, main_display, option=0):
+    pd.options.mode.chained_assignment = None 
+    
     if option == 0:
         print("Note: 일람표 포맷 선택 되었습니다. 포맷 변경은 option=1로 가능합니다.")
     
