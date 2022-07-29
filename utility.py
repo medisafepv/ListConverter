@@ -1,3 +1,12 @@
+'''
+final_LC program
+
+Author: Sion Kim
+Contact: sionkim@umich.edu
+Latest Edit: 07/29/2022
+'''
+
+# Library
 import io
 import re
 import pandas as pd
@@ -7,6 +16,10 @@ from ipywidgets import Layout
 import warnings
 
 def prompt_upload():
+    '''
+    Prompts use to upload a file by ipywidget. Returns instance of FileUpload. 
+    '''
+        
     uploader = widgets.FileUpload(description="Upload Coding Confirmation (.xlsx)", layout=Layout(width="270px"), multiple=False)
     display(uploader)
 
@@ -22,7 +35,11 @@ def prompt_upload():
 
 def load_from_widget(uploader_in, header=5, sheet_name="AE"):
     '''
-    Release function to load file
+    Requires the Coding Confirmation.xlsx file is well-formatted and sheet name as "AE". 
+        See 리피로우젯_RMP_2차_Spontaneous AE Coding Confirmation_dV0.1 as an example
+    Returns data as dataframe
+    
+    - uploader_in : instance of FileUpload with uploaded Coding Confirmation.xlsx file
     '''
     uploaded_file = uploader_in.value
     file_name = list(uploaded_file.keys())[0]
@@ -48,34 +65,9 @@ def load_from_widget(uploader_in, header=5, sheet_name="AE"):
     
     
 
-def load_format(filename, header=5, sheet_name="AE"):
-    '''
-    Debugging function to load file
-    '''
-    
-    df = pd.read_excel(filename, header=5, sheet_name="AE")
-    
-    colnames = ["이상사례명(MedDRA_SOC_ENG)","이상사례명(MedDRA_SOC_KOR)",
-            "이상사례명(MedDRA_PT_ENG)","이상사례명(MedDRA_PT_KOR)",
-            "Expectedness","차수","중대성","ADR 여부", "자료원"]
-    
-    df = df[colnames]
-    
-    df["SOC"] = df["이상사례명(MedDRA_SOC_ENG)"] + " (" + df["이상사례명(MedDRA_SOC_KOR)"] + ")"
-        
-    df["PT"] = df["이상사례명(MedDRA_PT_ENG)"] + " (" + df["이상사례명(MedDRA_PT_KOR)"] + ")"
-    df = df.drop(columns=["이상사례명(MedDRA_SOC_ENG)",
-                              "이상사례명(MedDRA_SOC_KOR)",
-                              "이상사례명(MedDRA_PT_ENG)","이상사례명(MedDRA_PT_KOR)"])
-    
-    
-       
-    return df
-
-
 def auto_cleaner(df):
     '''
-    Auto cleans trailing and leading whitespace from titles for easier recognition
+    Removes trailing and leading whitespace from titles for easier recognition
     '''
     binary_cols = ["Expectedness", "중대성", "ADR 여부", "자료원"]
 
@@ -93,6 +85,9 @@ def auto_cleaner(df):
 
 
 def process_meddra(df):
+    '''
+    Removes whitespace between words in MedDRA columns
+    '''
     print("Excel MedDRA (SOC, PT) summary")
     
     meddra_cols = ["SOC", "PT"]
@@ -114,6 +109,10 @@ def process_meddra(df):
 
         
 def process_binary(df, first_call=True):
+    '''
+    Ensures columns ["Expectedness", "중대성", "ADR 여부", "자료원"] are binary 
+    Enables user to edit/remove rows to ensure columns are binary
+    '''
     binary_cols = ["Expectedness", "중대성", "ADR 여부", "자료원"]
     edited = list()
     idx = 0
@@ -166,6 +165,10 @@ def process_binary(df, first_call=True):
     return df
 
 def process_time(df):
+    '''
+    Processes the "차수" column
+    Enables user to edit/remove rows to ensure columns are binary
+    '''
     choice = ""
     while (choice != "3"):
         print("Check if 차수 is correct:\n")
@@ -207,7 +210,7 @@ def clean_list(list_in):
 
 def identify_adrness(df):
     '''
-    Identifies adr in [no, yes] order
+    Identifies ADR column's binary values in [<non-ADR>, <ADR>] order
     '''
     adr_stat = clean_list(pd.unique(df["ADR 여부"]))
     # adr_stat = clean_list(["\tnonADr  "])
@@ -266,11 +269,13 @@ def identify_adrness(df):
         return [adr_stat[0], adr_stat[1]]
 
 
-
-
 def make_expectedness_key(df):
     '''
-    Works with data_processed     
+    Makes a key for expectedness (ADR 여부) column by SOC-PT as an index
+    
+    Returns (2xn) dataframe with 
+        Columns as SOC-PT linked by '#'
+        Values as the corresponding expectedness
     '''
     df["SOC#PT"] = df["SOC"] + "#" + df["PT"]
     key = df.drop(columns=['차수', '중대성', 'ADR 여부', '자료원', 'SOC', 'PT']).reset_index(drop=True)
@@ -283,6 +288,11 @@ def make_expectedness_key(df):
     return key
 
 def edit_multilevel_columns(table, pairing, level):
+    '''
+    Renames a multiindex dataframe table according to key-value pairing of the appropriate level
+    
+    E.g.,  pairing={<old column name> : <new column name>}
+    '''
     df = table.copy()
     new_columns = []
     for triple in df.columns:
@@ -296,7 +306,7 @@ def edit_multilevel_columns(table, pairing, level):
     
 def identify_seriousness(df):
     '''
-    Identifies seriousness in [no, yes] order
+    Identifies seriousness (중대성)'s binary values in [<not serious>, <serious>] order
     '''
     ser_stat = clean_list(pd.unique(df["중대성"]))
     # ser_stat = clean_list(["nO\t"])
@@ -378,6 +388,15 @@ def finalize_columns(combined_in, adr, non_adr, serious, non_serious):
 
 
 def add_missing_columns(table_in, seriousness, time, adr_status):
+    '''
+    In case data is incomplete and all combinations of values of 
+    - Seriousness (중대성)
+    - Time (차수)
+    - ADR status (ADR 여부)
+    The multiindex header may be missing some combination
+    This function ensures all combinations are present with values initialized to 0
+    '''
+    
     table = table_in.copy()
     
     for s in seriousness:
@@ -400,8 +419,10 @@ def add_missing_columns(table_in, seriousness, time, adr_status):
 
 def transform_format(data_processed_in, mode=0):
     '''
+    Transforms the coding confirmation .xlsx dataframe into the final 일람표 format
+    
     mode = 0 : SOC and PT 합치 된 포맷 (합계 포함)
-    mode = 1 : SOC and PT 분리 된 포맷 (default)
+    mode = 1 : SOC and PT 분리 된 포맷 (deprecated)
     '''
     data_processed_in = data_processed_in.copy()
     
@@ -419,12 +440,8 @@ def transform_format(data_processed_in, mode=0):
 
     
     adr_status = identify_adrness(data_processed_in)
-    # print("In {} ADR: '{}' NON-ADR: '{}'".format(adr_status, adr_status[1], adr_status[0]))
     seriousness = identify_seriousness(data_processed_in)
     time = pd.unique(data_processed_in["차수"])
-    
-    # All the ADR identification processing was necessary from having to know WHICH column was missing to add the proper one. No need anymore if we find a 
-    # rigorous method to identify all missing columns and instantiate it with 0
     
     table = add_missing_columns(table, seriousness, time, adr_status)
     
