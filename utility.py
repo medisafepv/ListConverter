@@ -113,7 +113,7 @@ def process_meddra(df):
     return df
 
         
-def process_binary(df):
+def process_binary(df, first_call=True):
     binary_cols = ["Expectedness", "중대성", "ADR 여부", "자료원"]
     edited = list()
     idx = 0
@@ -136,7 +136,7 @@ def process_binary(df):
                 if len(pd.unique(cleaned)) > 2:
                     print("Binary 처리 실패. '{}'".format(binary_cols[idx]))
                     print(pd.unique(cleaned))
-                    df = process_binary(df)
+                    df = process_binary(df, False)
 
             elif choice == "2":
                 edited.append(idx)
@@ -148,19 +148,20 @@ def process_binary(df):
                 if len(pd.unique(cleaned)) > 2:
                     print("Binary 처리 실패. '{}'".format(binary_cols[idx]))
                     print(pd.unique(cleaned))
-                    df = process_binary(df)
+                    df = process_binary(df, False)
                 
             else:
                 print("Enter 1 or 2")
                 idx -= 1
         idx += 1
         
-    print("*"*40)
-    print("Excel column summary")
-    for binary in binary_cols:
-        cleaned = [x for x in df[binary] if str(x) != 'nan']
-        print("    {} : {}".format(binary, pd.unique(cleaned)))
-    print("*"*40)
+    if first_call:
+        print("*"*40)
+        print("Excel column summary")
+        for binary in binary_cols:
+            cleaned = [x for x in df[binary] if str(x) != 'nan']
+            print("    {} : {}".format(binary, pd.unique(cleaned)))
+        print("*"*40)
     
     return df
 
