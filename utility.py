@@ -86,7 +86,7 @@ def auto_cleaner(df):
             new = re.sub("(\s|[ \t]|[\n])*$", "", new)
             
             if new != old:
-                df[binary_cols[i]] = df[binary_cols[i]].str.replace(old, new, regex=True)
+                df[binary_cols[i]] = df[binary_cols[i]].str.replace(old, new, regex=False)
     
 
     return df
@@ -125,12 +125,12 @@ def process_binary(df):
             print("Column '{}' is not binary: ".format(binary_cols[idx]), end="")
             print(pd.unique(cleaned))
 
-            choice = input("\t모드를 숫자로 선택 후 'Enter'키로 이동하세요:\n\t1) 제목 삭제 모드 (모든 매치 제거) \n\t2) 제목 수정 모드 (오타인 경우) \n\t3) 확인. 다음 \n\tNumber: ")
+            choice = input("\t모드를 숫자로 선택 후 'Enter'키로 이동하세요:\n\t1) 제목 삭제 모드 (모든 매치 제거) \n\t2) 제목 수정 모드 (오타인 경우) \n\tEnter: ")
             
             if choice == "1":
                 edited.append(idx)
                 problem_rows = input("\t\t(정확히) 일치하는 행 제거: " )
-                df = df.loc[~df[binary_cols[idx]].str.contains(problem_rows)]
+                df = df.loc[~df[binary_cols[idx]].str.contains(problem_rows, regex=False, na=True)]
                 
                 cleaned = [x for x in df[binary_cols[idx]] if str(x) != 'nan']
                 if len(pd.unique(cleaned)) > 2:
@@ -142,7 +142,7 @@ def process_binary(df):
                 edited.append(idx)
                 remove = input("\t제거할 문자열: ")
                 value = input("\t대체할 문자열: ")
-                df[binary_cols[idx]] = df[binary_cols[idx]].str.replace(remove, value, regex=True)
+                df[binary_cols[idx]] = df[binary_cols[idx]].str.replace(remove, value, regex=False)
                 
                 cleaned = [x for x in df[binary_cols[idx]] if str(x) != 'nan']
                 if len(pd.unique(cleaned)) > 2:
@@ -150,12 +150,8 @@ def process_binary(df):
                     print(pd.unique(cleaned))
                     df = process_binary(df)
                 
-            elif choice == "3":
-                idx += 1
-                continue
-                
             else:
-                print("Enter 1, 2 or 3")
+                print("Enter 1 or 2")
                 idx -= 1
         idx += 1
         
@@ -180,15 +176,15 @@ def process_time(df):
 
             print("*"*40)
             print("Removing following rows...\n")
-            print("{}\n\n".format(df.loc[df["차수"].str.contains(problem_rows)]))
+            print("{}\n\n".format(df.loc[df["차수"].str.contains(problem_rows, regex=False)]))
             print("*"*40)
 
-            df = df.loc[~df["차수"].str.contains(problem_rows)]
+            df = df.loc[~df["차수"].str.contains(problem_rows, regex=False)]
 
         elif choice == "2":
             remove = input("\t제거할 문자열: ")
             value = input("\t대체할 문자열: ")
-            df["차수"] = df["차수"].str.replace(remove, value, regex=True)
+            df["차수"] = df["차수"].str.replace(remove, value, regex=False)
             
         elif choice == "3":
             continue
