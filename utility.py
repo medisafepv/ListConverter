@@ -41,11 +41,16 @@ def load_from_widget(uploader_in, header=5, sheet_name="AE"):
     
     - uploader_in : instance of FileUpload with uploaded Coding Confirmation.xlsx file
     '''
-    uploaded_file = uploader_in.value
-    file_name = list(uploaded_file.keys())[0]
-    df = pd.read_excel(io.BytesIO(uploaded_file[file_name]["content"]),
+    uploader = uploader_in.value[0]
+    df = pd.read_excel(io.BytesIO(uploader["content"]),
                        header=header,
                        sheet_name=sheet_name)
+    # 07/29/2022 
+    # uploaded_file = uploader_in.value
+    # file_name = list(uploaded_file.keys())[0]
+    # df = pd.read_excel(io.BytesIO(uploaded_file[file_name]["content"]),
+    #                    header=header,
+    #                    sheet_name=sheet_name)
     
     colnames = ["이상사례명(MedDRA_SOC_ENG)","이상사례명(MedDRA_SOC_KOR)",
             "이상사례명(MedDRA_PT_ENG)","이상사례명(MedDRA_PT_KOR)",
