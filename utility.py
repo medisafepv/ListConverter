@@ -473,7 +473,7 @@ def transform_format(data_processed_in, mode=0):
     table_df["stat"] = 1
     # supress performance warnings
     warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
-    sum_stat = table_df.groupby("SOC").sum()
+    sum_stat = table_df.groupby("SOC").sum(numeric_only=True)
     sum_stat["Expectedness"] = "" 
     sum_stat["자료원"] = ""
     sum_stat["stat"] = 0
